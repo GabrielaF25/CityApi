@@ -1,4 +1,7 @@
-﻿using CityApiMe.Models;
+﻿using AutoMapper;
+using CityApiMe.DbContexts;
+using CityApiMe.Models;
+using CityApiMe.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,27 +12,39 @@ namespace CityApiMe.Controllers
 	
 	public class CitiesController : ControllerBase
 	{
-		private readonly CitiesDataStores citiesDataStores;
+		private ICityInfoRepository cityInfoRepository;
+		private readonly IMapper mapper;
 
-		public CitiesController(CitiesDataStores citiesDataStores)
+		public CitiesController(ICityInfoRepository cityInfoRepository, IMapper mapper)
 		{
-			this.citiesDataStores = citiesDataStores;
+			this.cityInfoRepository = cityInfoRepository;
+			this.mapper = mapper;
 		}
+
 		[HttpGet]
-		public ActionResult<IEnumerable<City>> GetCities()
+		public async Task<ActionResult<IEnumerable<CitiesWithoutPOI>>> GetCities(string? name, string?searchQuery)
 		{
-			return Ok(citiesDataStores.Cities);
+			var city = await cityInfoRepository.GetCitiesAsync(name,searchQuery);
+			
+			return Ok(mapper.Map<IEnumerable<CitiesWithoutPOI>>(city));
 
 		}
+
 		[HttpGet("{id}")]
-		public ActionResult<City> GetCity(int id)
+		public async Task<ActionResult<CitiesWithoutPOI>> GetCity(int id, bool pointOfInterest)
 		{
-			var city = citiesDataStores.Cities.FirstOrDefault(p => p.Id == id);
+			var city = await cityInfoRepository.GetCityAsync(id,pointOfInterest);
 			if(city == null)
-			{
-				return NotFound();
+			{ 
+				return NotFound(); 
 			}
-			return Ok(city);
+			if (pointOfInterest){
+
+				return Ok(mapper.Map<CityMod>(city));
+			}
+			else 
+
+			return Ok(mapper.Map<CitiesWithoutPOI>(city));
 		}
 	}
 }

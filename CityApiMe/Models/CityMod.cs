@@ -1,6 +1,6 @@
 ﻿namespace CityApiMe.Models
 {
-	public class City
+	public class CityMod
 	{
 		public int Id { get; set; }
 		public string Name { get; set; } = string.Empty;
